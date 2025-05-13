@@ -6,7 +6,7 @@ from routers.kyc import upgrade as kyc_upgrade
 app = FastAPI(title="SmartBankBot API")
 
 # Include Routers
-app.include_router(onboarding.router, prefix="/apiv1/onboarding")
+app.include_router(onboarding.router, prefix="/api/v1/onboarding")
 app.include_router(account_balance.router, prefix="/api/v1/account")
 app.include_router(transactions.router, prefix="/api/v1/transfer")
 app.include_router(airtime.router, prefix="/api/v1/airtime")

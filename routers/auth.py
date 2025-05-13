@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from utils.security import verify_password, create_access_token, hash_password
+from core.security import verify_password, create_access_token, hash_password
 from models.user_db import User
 from sqlalchemy.orm import Session
 from database.session import SessionLocal, get_db
@@ -9,8 +9,19 @@ from pydantic import BaseModel
 
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="app/v1/token")
 
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    try:
+        payload = decode_token(token)
+        user = db.query(User).filter(User.id == payload.get("sub")).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        return user
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    
 # Mock database (Replace with real DB lookup)
 class RegisterRequest(BaseModel):
    phone: str
@@ -27,6 +38,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token(data={"sub": user.phone, "role": user.role.name})
     return {"access_token": token, "token_type": "bearer"}
+
+
 
 @router.post("/register")
 def register_user(req: UserCreate, db: Session = Depends(get_db)):
@@ -45,11 +58,19 @@ def register_user(req: UserCreate, db: Session = Depends(get_db)):
     db.refresh(user)
     return {"message": "Registration successful", "user_id": user.id}
 
+@router.post("/login")
+def login(phone: str, password: str, db: Session = Depends(get_db)):
+          user = db.query(User).filter(User.phone == phone).first()
+          if not user or not verify_password(password, user.hashed_password):
+               raise HTTPException(status_code=401, detail="Invalid credentials")
+          
+          access_token = create_access_token(data={"sub": str(user.id)})
+          return {"access_token": access_token, "token_type": "bearer"}
 
 
 # Dependency to get current user
 from jose import JWTError
-from utils.security import decode_token
+from core.security import decode_token
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     payload = decode_token(token)

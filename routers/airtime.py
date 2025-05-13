@@ -9,4 +9,8 @@ class AirtimeTopUp(BaseModel):
 
 @router.post("/topup")
 def top_up_airtime(data: AirtimeTopUp):
-    return{"status": "Success", "Message": f"{data.amount} credited to {data.phone_number}"}
+    # Simulate or call real API for airtime top-up
+    return {
+        "status": "success",
+        "message": f"Airtime of NGN {data.amount} successfully recharged to {data.phone_number}"
+    }

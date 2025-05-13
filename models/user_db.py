@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Integer, DateTime, Enum
 from database.session import Base
 from datetime import datetime
 import enum
+from sqlalchemy.orm import relationship
 
 class UserRole(enum.Enum):
     user = "user"
@@ -22,3 +23,4 @@ class User(Base):
     address_proof_url = Column(String, nullable=True)
     kyc_status = Column(String, default="pending")
     created_at = Column(DateTime, default=datetime.utcnow)
+    wallet = relationship("Wallet", uselist=False, back_populates="user")
