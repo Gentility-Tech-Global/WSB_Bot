@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from routers import auth, account_balance, onboarding, transactions, airtime, bills, loan, qr, image_ocr, faq
 from routers import admin
-# from routers.kyc import upgrade as kyc_upgrade
+from routers.kyc import upgrade as kyc_upgrade
 
 app = FastAPI(title="SmartBankBot API")
 
@@ -17,7 +17,7 @@ app.include_router(image_ocr.router, prefix="/api/v1/ocr")
 app.include_router(faq.router, prefix="/api/v1/faq")
 app.include_router(auth.router, prefix="/app/v1", tags=["Authentication"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
-# app.include_router(kyc_upgrade.router, prefix="/kyc", tags=["KYC"])
+app.include_router(kyc_upgrade.router, prefix="/kyc", tags=["KYC"])
 
 @app.get("/")
 def read_root():
