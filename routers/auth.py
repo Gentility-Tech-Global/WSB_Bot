@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from core.security import verify_password, create_access_token, hash_password
+from core.security import verify_password, create_access_token, get_password_hash
 from models.user_db import User
 from sqlalchemy.orm import Session
 from database.session import SessionLocal, get_db
@@ -50,7 +50,7 @@ def register_user(req: UserCreate, db: Session = Depends(get_db)):
         phone=req.phone,
         fullname=req.full_name,
         bvn=req.bvn,
-        hashed_password=hash_password(req.password),
+        hashed_password=get_password_hash(req.password),
         role=req.role
     )
     db.add(user)

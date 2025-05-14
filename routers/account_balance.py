@@ -1,20 +1,12 @@
-from fastapi import APIRouter, Depends
-from routers.auth import get_current_user
-from schemas.user import UserinDB
+from fastapi import APIRouter, HTTPException
+from schemas.account_balance_ import BalanceCheckRequest, BalanceCheckResponse
+from services.account_balance_service import fetch_account_balance
 
-router = APIRouter()
+router = APIRouter(prefix="/account", tags=["Account Balance"])
 
-@router.get("/balance/{account_number}")
-def get_balance(account_number: str):
-    # Mocked logic
-    balance = 12400.50
-    return {"Account_number": account_number, "Balance": balance}
-
-
-@router.get("/secure/balance")
-def check_balance(user=Depends(get_current_user)):
-    return {"message": f"Hello {user.full_name}, here's your balance."}
-
-@router.get("/secure-data")
-def secure_endpoint(current_user: UserinDB = Depends(get_current_user)):
-    return {"message": f"Hello, {current_user.full_name}"}
+@router.post("/balance", response_model=BalanceCheckResponse)
+async def check_balance(payload: BalanceCheckRequest):
+    response = fetch_account_balance(payload)
+    if response.status == "failed":
+        raise HTTPException(status_code=403, detail=response.message)
+    return response

@@ -1,56 +1,51 @@
-from sqlalchemy.orm import Session
-from models.wallet_db import Wallet, TransactionLog
-from core.config import settings
-from fastapi import HTTPException
+import uuid
 from datetime import datetime
-from decimal import Decimal
+from typing import List
+from schemas.transaction_ import (
+    TransactionCreate,
+    TransactionResponse,
+    TransactionHistoryItem,
+    TransactionHistoryResponse
+)
 
 
-def transfer_funds(sender_id: int, receiver_id: int, amount: Decimal, db: Session) -> dict:
-    if amount <= 0:
-        raise HTTPException(status_code=400, detail="Invalid transfer amount")
+# Simulated in-memory "database"
+ALLOWED_PARTNERS = {"GTBank", "FunZ MFB"}
+transactions_db = []
 
-    if amount > Decimal(settings.TRANSFER_LIMIT):
-        raise HTTPException(status_code=400, detail=f"Transfer exceeds limit of {settings.TRANSFER_LIMIT}")
+def create_transaction(data: TransactionCreate) -> TransactionResponse:
+    transaction_id = str(uuid.uuid4())
+    timestamp = datetime.utcnow()
 
-    # Fetch wallets
-    sender_wallet = db.query(Wallet).filter(Wallet.user_id == sender_id).first()
-    receiver_wallet = db.query(Wallet).filter(Wallet.user_id == receiver_id).first()
-
-    if not sender_wallet:
-        raise HTTPException(status_code=404, detail="Sender wallet not found")
-    if not receiver_wallet:
-        raise HTTPException(status_code=404, detail="Receiver wallet not found")
-
-    if sender_wallet.balance < amount:
-        raise HTTPException(status_code=400, detail="Insufficient funds")
-
-    # Perform transfer
-    sender_wallet.balance -= amount
-    receiver_wallet.balance += amount
-
-    # Log the transaction
-    trnsaction = TransactionLog(
-        sender_id=sender_id,
-        receiver_id=receiver_id,
-        amount=Decimal(amount),
-        timestamp=datetime.utcnow
-    )
-    # Optionally: Add to a transaction history model/table here
-
-    db.commit()
-    db.refresh(sender_wallet)
-    db.refresh(receiver_wallet)
-
-    return {
+    transaction_record = {
+        "transaction_id": transaction_id,
+        "sender_id": data.sender_id,
+        "receiver_id": data.receiver_id,
+        "amount": float(data.amount),
+        "transaction_type": data.transaction_type,
         "status": "success",
-        "message": "Transfer successful",
-        "data": {
-            "from": sender_id,
-            "to": receiver_id,
-            "amount": str(amount),
-            "sender_balance": str(sender_wallet.balance),
-            "receiver_balance": str(receiver_wallet.balance),
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        "timestamp": timestamp,
+        "narration": data.narration
     }
+
+    transactions_db.append(transaction_record)
+
+    return TransactionResponse(**transaction_record)
+
+def get_transaction_history(user_id: str) -> TransactionHistoryResponse:
+    user_transactions: List[TransactionHistoryItem] = []
+
+    for tx in transactions_db:
+        if tx["sender_id"] == user_id or tx["receiver_id"] == user_id:
+            user_transactions.append(TransactionHistoryItem(
+                transaction_id=tx["transaction_id"],
+                amount=tx["amount"],
+                transaction_type=tx["transaction_type"],
+                timestamp=tx["timestamp"],
+                narration=tx.get("narration")
+            ))
+
+    return TransactionHistoryResponse(
+        user_id=user_id,
+        transactions=user_transactions
+    )

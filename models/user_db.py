@@ -15,7 +15,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     phone = Column(String, unique=True, index=True, nullable=False)
     bvn = Column(String, unique=True, index=True)
-    full_name = Column(String)
+    full_name = Column(String, nullable=True)
     hashed_password = Column(String)
     role = Column(Enum(UserRole), default=UserRole.user)
     tier = Column(Integer, default=1)

@@ -15,8 +15,8 @@ class UserinDB(BaseModel):
     kyc_status: str
     tier: int
 
-    class Config:
-        orm_mode = True
+class Config:
+    from_attributes = True
 
 class User(BaseModel):
     phone: str

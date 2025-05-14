@@ -1,11 +1,18 @@
-import os
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
-load_dotenv()
+class Settings(BaseSettings):
+    DATABASE_URL: str
+    API_SECRET_KEY: str
+    TRANSFER_LIMIT: int = 100000
+    DEBUG: bool = True
+    fernet_secret_key: str
+    webhook_url: str = "https://your-fallback-webhook.com/notify"  # default/fallback
+    app_name: str = "My App"
+    whatsapp_access_token: str
+    whatsapp_api_url: str
 
-class Settings:
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:pass@localhost/botdb")
-    API_SECRET_KEY: str = os.getenv("API_SECRET_KEY", "fallback_key")
-    TRANSFER_LIMIT: int = int(os.getenv("TRANSFER_LIMIT", 100000))
 
-Settings = Settings()
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
