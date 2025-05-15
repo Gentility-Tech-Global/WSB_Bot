@@ -1,19 +1,14 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
-import openai
+from fastapi import APIRouter, HTTPException
+from schemas.faq_ import FAQResponse, PartnerRequest
+from services.faq_service import get_faqs
 
-router = APIRouter()
 
-class Question(BaseModel):
-    query: str
+router = APIRouter(prefix="/faq", tags=["FAQs"])
 
-@router.post("/ask")
-def ask_question(q: Question):
-    # Requires `OPENAI_API_KEY` setup in your environment
-    openai.api_key = "your-openai-key"
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": q.query}]
-    )
-    return {"answer": response.choices[0].message["content"]}
+@router.post("/", response_model=FAQResponse)
+async def fetch_faqs(request: PartnerRequest):
+    response = get_faqs(request)
+    if response.status == "failed":
+        raise HTTPException(status_code=403, detail=response.message)
+    return response
 
