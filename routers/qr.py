@@ -1,51 +1,33 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
-router = APIRouter()
+from schemas.qr_ import QRScanRequest, QRMerchantDetails, QRPaymentInitiate, QRPaymentResponse, MerchantRegisterRequest, MerchantRegisterResponse
+from services.qr_service import scan_qr_code, process_qr_payment, register_merchant
+from database.session import get_db
 
-# Simulated QR Code Database (in-memory)
-QR_DATABASE = {
-    "qr12345": {
-        "account_name": "John Doe",
-        "account_number": "0123456789",
-        "bank": "SmartBank"
-    }
-}
+router = APIRouter(prefix="/qr", tags=["QR Payment"])
 
-class QRScanRequest(BaseModel):
-    qr_code_id: str  # extracted from scanned QR code
+@router.post("/register_merchant", response_model=MerchantRegisterResponse)
+def onboard_merchant(request: MerchantRegisterRequest):
+    try:
+        return register_merchant(request)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Server Error")
 
-class QRPaymentRequest(BaseModel):
-    qr_code_id: str
-    amount: float
-    sender_account: str
 
-@router.post("/scan")
-def scan_qr(qr_data: QRScanRequest):
-    if qr_data.qr_code_id not in QR_DATABASE:
-        raise HTTPException(status_code=404, detail="QR Code not recognized")
+@router.post("/scan", response_model=QRMerchantDetails)
+def handle_qr_scan(data: QRScanRequest):
+    try:
+        return scan_qr_code(data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-    account_info = QR_DATABASE[qr_data.qr_code_id]
-    return {
-        "status": "success",
-        "message": "Scan successful. Enter amount.",
-        "recipient_details": account_info
-    }
 
-@router.post("/pay")
-def complete_payment(payment: QRPaymentRequest):
-    if payment.qr_code_id not in QR_DATABASE:
-        raise HTTPException(status_code=404, detail="Invalid QR Code")
-
-    if payment.amount <= 0:
-        raise HTTPException(status_code=400, detail="Amount must be greater than zero")
-
-    recipient = QR_DATABASE[payment.qr_code_id]
-
-    # Simulate transfer processing logic
-    return {
-        "status": "success",
-        "message": f"{payment.amount} sent to {recipient['account_name']} ({recipient['account_number']})",
-        "from": payment.sender_account,
-        "to": recipient
-    }
+@router.post("/pay", response_model=QRPaymentResponse)
+def handle_qr_payment(payload: QRPaymentInitiate, db: Session = Depends(get_db)):
+    try:
+        return process_qr_payment(payload, db)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

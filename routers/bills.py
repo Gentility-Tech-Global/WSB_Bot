@@ -1,13 +1,12 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
+from schemas.bills_ import BillPaymentRequest, BillPaymentResponse
+from services.bills_service import process_bill_payment
 
-router = APIRouter()
+router = APIRouter(prefix="/bills", tags=["Bills Payment"])
 
-class Billpayment(BaseModel):
-    Service_provider: str
-    account_number: str
-    amount: float
-
-@router.post("/pay")
-def pay_bill(payment: Billpayment):
-    return {"status": "Success", "Message": f"Bill paid to {payment.service_provider}"}
+@router.post("/pay", response_model=BillPaymentResponse)
+async def pay_bill(payload: BillPaymentRequest):
+    response = process_bill_payment(payload)
+    if response.status == "failed":
+        raise HTTPException(status_code=403, detail=response.message)
+    return response

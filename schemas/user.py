@@ -7,6 +7,17 @@ class UserRole(str, Enum):
     admin = "admin"
     partner = "partner"
 
+class UserinDB(BaseModel):
+    id: int
+    phone: str
+    full_name: str
+    role: UserRole
+    kyc_status: str
+    tier: int
+
+class Config:
+    from_attributes = True
+
 class User(BaseModel):
     phone: str
     bvn: str

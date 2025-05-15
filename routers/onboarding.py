@@ -1,16 +1,30 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Depends
+from schemas.onboard import UserRegister, UserProfile, UserRegisterResponse, UpdateUserProfile
+from services.onboarding_service import register_user, get_user_profile, update_user_profile
+from database.session import get_db
+from sqlalchemy.orm import Session
 
-router = APIRouter()
 
-class KYCRequest(BaseModel):
-    full_name: str
-    phone_number: str
-    bvn: str
-    date_of_birth: str
+router = APIRouter(prefix="/onboarding", tags=["Onboarding"])
 
-@router.post("/register")
-def register_user(data: KYCRequest):
-    if len(data.bvn) != 11:
-        raise HTTPException(status_code=400, detail="Invalid BVN")
-    return {"status": "success", "account_number": "1234567890"}
+
+@router.post("/register", response_model=UserRegisterResponse)
+def register_user(data: UserRegister, db: Session = Depends(get_db)):
+    try:
+        return register_user(data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+@router.get("/profile/{user_id}", response_model=UserProfile)
+def profile(user_id: str):
+    try:
+        return get_user_profile(user_id)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
+@router.put("/profile/{user_id}", response_model=UserProfile)
+def update_profile(user_id: str, data: UpdateUserProfile):
+    try:
+        return update_user_profile(user_id, data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
