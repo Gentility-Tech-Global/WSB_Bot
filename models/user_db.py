@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Enum
+from sqlalchemy import Column, String, Integer, DateTime, Enum, Date
 from database.session import Base
 from datetime import datetime
 import enum
@@ -22,5 +22,7 @@ class User(Base):
     nin_url = Column(String, nullable=True)
     address_proof_url = Column(String, nullable=True)
     kyc_status = Column(String, default="pending")
+    date_of_birth = Column(Date, nullable=False)
+    partner = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     wallet = relationship("Wallet", uselist=False, back_populates="user")

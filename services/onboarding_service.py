@@ -12,6 +12,8 @@ from utils.account import generate_account_number
 ALLOWED_PARTNERS = {"GTBank", "FunZ MFB"}
 
 def register_user(data: UserRegister, db: Session) -> UserRegisterResponse:
+    if data.partner not in ALLOWED_PARTNERS:
+        raise HTTPException(status_code=403, detail="Partner not authorized for onboarding")
     # Check if user already exists by phone or email
     existing_user = db.query(User).filter(User.phone == data.phone_number).first()
     if existing_user:
@@ -25,7 +27,9 @@ def register_user(data: UserRegister, db: Session) -> UserRegisterResponse:
         full_name=data.full_name,
         phone=data.phone_number,
         hashed_password=hashed_password,
-        kyc_status="pending"
+        date_of_birth=data.date_of_birth,
+        kyc_status="pending",
+        partner=data.partner
     )
     db.add(new_user)
     db.commit()
