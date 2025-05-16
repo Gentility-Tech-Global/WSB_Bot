@@ -8,9 +8,9 @@ router = APIRouter(prefix="/data", tags=["Data TopUp"])
 @router.post("/topup", response_model=DataTopUpResponse)
 def data_topup(request: DataTopUpRequest):
     try:
-        respose = process_data_topup(request)
-        if respose.status == "failed":
-            raise HTTPException(status_code=400, detail=respose.message)
-        return respose
+        response = process_data_topup(request)
+        if response.status == "failed":
+            raise HTTPException(status_code=400, detail=response.message)
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

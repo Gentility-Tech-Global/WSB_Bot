@@ -20,5 +20,5 @@ def process_airtime_topup(request: AirtimeTopUpRequest) -> AirtimeTopUpResponse:
     return AirtimeTopUpResponse(
         status="success",
         transaction_id=transaction_id,
-        message=f"Airtiem of #{request.amount} sent to {request.phone_number} on {request.network}"
+        message=f"Airtime of #{request.amount} sent to {request.phone_number} on {request.network}"
     )

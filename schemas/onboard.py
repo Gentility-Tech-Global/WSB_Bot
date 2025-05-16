@@ -28,11 +28,17 @@ class UserRegisterResponse(BaseModel):
 class UserProfile(BaseModel):
     user_id: str
     full_name: Optional[str]
-    email: Optional[EmailStr] 
     phone_number: Optional[str]
+    date_of_birth: date
+    bvn: Optional[str]
+    role: Optional[str]
+    email: Optional[EmailStr] 
     address: Optional[str]
 
 class UpdateUserProfile(BaseModel):
     full_name: Optional[str]
     phone_number: Optional[str]
+    date_of_birth: date
+    bvn: Optional[str]
     address: Optional[str]
+    role: Optional[str]

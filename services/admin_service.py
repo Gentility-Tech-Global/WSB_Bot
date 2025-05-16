@@ -12,6 +12,9 @@ def get_admin_stats(db: Session) -> AdminStats:
         total_partners=db.query(User).filter(User.role == UserRole.partner).count(),
         pending_kyc=db.query(User).filter(User.kyc_status == "pending").count()
     )
+def require_admin(user: User):
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required.")
 
 def approve_kyc(user_id: int, db: Session):
     user = db.query(User).filter(User.id == user_id).first()

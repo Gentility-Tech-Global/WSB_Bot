@@ -16,7 +16,7 @@ class User(Base):
     phone = Column(String, unique=True, index=True, nullable=False)
     bvn = Column(String, unique=True, index=True)
     full_name = Column(String, nullable=True)
-    hashed_password = Column(String)
+    hashed_password = Column(String, nullable=False)
     role = Column(Enum(UserRole), default=UserRole.user)
     tier = Column(Integer, default=1)
     nin_url = Column(String, nullable=True)

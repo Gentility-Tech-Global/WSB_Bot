@@ -18,7 +18,7 @@ class QRScanLog(Base):
     __tablename__ = "qr_scan_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    merchant_id = Column(String, ForeignKey("merchants.merchant_id"))
+    merchant_id = Column(String, ForeignKey("merchants.merchant_id"), index=True)
     user_id = Column(String, nullable=False)
     status = Column(String, default="success")
     raw_qr_data = Column(Text)

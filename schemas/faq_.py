@@ -13,3 +13,4 @@ class FAQResponse(BaseModel):
 
 class PartnerRequest(BaseModel):
     channel_partner: str = Field(..., description="e.g., GTBank, FunZ MFB")
+    

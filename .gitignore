@@ -7,21 +7,38 @@ __pycache__/
 
 # Virtual environments
 venv/
-.env/
+
+# Environment variables
 .env
-
-# OS-specific files
-.DS_Store
-Thumbs.db
-
-# VS Code settings
-.vscode/
-
-# Pytest cache
-.pytest_cache/
-
-# Local SQLite DB (if any)
-*.sqlite3
 
 # Logs
 *.log
+
+# Test cache
+.pytest_cache/
+
+# SQLite DBs (if used)
+*.sqlite3
+
+# Coverage reports
+.coverage
+htmlcov/
+coverage.xml
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Alembic migrations
+migrations/

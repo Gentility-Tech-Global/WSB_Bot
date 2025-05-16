@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, ForeignKey, DateTime, Numeric
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Numeric
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database.session import Base
@@ -18,7 +18,8 @@ class Wallet(Base):
 class TransactionLog(Base):
     __tablename__ = "transactions"
     id = Column(Integer, primary_key=True)
-    sender_id = Column(Integer)
-    receiver_id = Column(Integer)
-    amount = Column(Numeric(12, 2))
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    receiver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    amount = Column(Numeric(12, 2), nullable=False)
+    status = Column(String, default="completed")
     timestamp = Column(DateTime, default=datetime.utcnow)
