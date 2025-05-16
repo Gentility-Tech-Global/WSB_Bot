@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from models.user_db import User
 from sqlalchemy.orm import Session
 from database.session import get_db
-from schemas.auth_ import UserRegister, UserLogin, Token, PartnerAuth
-from services.auth_service import register_user, login_user, validate_partner
+from schemas.auth_ import UserRegister, UserLogin, Token, PartnerAuth, RefreshTokenRequest
+from services.auth_service import register_user, login_user, validate_partner, refresh_access_token
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -16,6 +16,10 @@ def register(data: UserRegister, partner: PartnerAuth, db: Session = Depends(get
 def login(data: UserLogin, partner: PartnerAuth, db: Session = Depends(get_db)):
     validate_partner(partner.channel_partner)
     return login_user(data, db)
+
+@router.post("/refresh", response_model=Token)
+def refresh_token(request: RefreshTokenRequest):
+    return refresh_access_token(request)
 
 
 # Dependency to get current user
