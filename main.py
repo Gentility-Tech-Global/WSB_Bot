@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from routers import auth, account_balance, loans, onboarding, airtime, bills, qr, image_ocr, faq, transfers
 from routers import admin
 from routers.kyc import upgrade as kyc_upgrade
+from middleware.request_logger import IPLoggingMiddleware
 
 app = FastAPI(title="SmartBankBot API")
 
@@ -18,6 +19,7 @@ app.include_router(faq.router, prefix="/api/v1/faq")
 app.include_router(auth.router, prefix="/app/v1", tags=["Authentication"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(kyc_upgrade.router, prefix="/kyc", tags=["KYC"])
+app.add_middleware(IPLoggingMiddleware)
 
 @app.get("/")
 def read_root():

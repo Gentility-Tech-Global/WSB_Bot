@@ -1,35 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 from models.user_db import User
 from database.session import get_db
-from routers.auth import get_current_user
-from sqlalchemy.orm import Session
+from dependencies.roles import require_role
+from services import admin_service
+from schemas.admin_ import UserSummary, AdminStats
 
-router = APIRouter()
+router = APIRouter(prefix="/admin", tags=["Admin"])
 
 @router.get("/only")
-def admin_route(user: User = Depends(get_current_user)):
-    if user.role.name != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized")
-    return {"message": f"Welcome admin {user.full_name}"}
+def admin_welcome(current_user: User = Depends(require_role("admin"))):
+    return {"message": f"Welcome admin {current_user.full_name}"}
 
 
-@router.get("/users")
-def list_users(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    if user.role.name != "admin":
-        raise HTTPException(status_code=403, detail="Not authorized")
-    return db.query(User).all()
+@router.get("/users", response_model=list[UserSummary])
+def list_users(current_user: User = Depends(require_role("admin")), db: Session = Depends(get_db)):
+    return admin_service.get_all_users(db)
 
 
-@router.post("/admin/kyc/approve/{user_id}")
-def approve_kyc(user_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    if user.role.name != "admin":
-        raise HTTPException(status_code=403, detail="Admin access only")
-    
-    kyc_user = db.query(User).filter(User.id == user_id).first()
-    if not kyc_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    kyc_user.kyc_status = "approved"
-    kyc_user.tier +=1
-    db.commit()
-    return {"message": f"User{kyc_user.full_name} upgrade to Tier {kyc_user.tier}"}
+@router.post("/kyc/approve/{user_id}")
+def approve_kyc(user_id: int, current_user: User = Depends(require_role("admin")), db: Session = Depends(get_db)):
+    return admin_service.approve_kyc(user_id, db)
+
+
+@router.get("/stats", response_model=AdminStats)
+def admin_stats(current_user: User = Depends(require_role("admin")), db: Session = Depends(get_db)):
+    return admin_service.get_admin_stats(db)

@@ -1,9 +1,9 @@
-from schemas.auth_ import UserLogin, UserRegister, Token
+from schemas.auth_ import UserLogin, UserRegister, Token, RefreshTokenRequest
 from sqlalchemy.orm import Session
 from models.user_db import User
-from core.security import verify_password, create_access_token, get_password_hash
+from core.security import verify_password, create_access_token, get_password_hash, create_refresh_token, decode_token
 from fastapi import HTTPException
-from typing import Optional
+
 
 ALLOWED_PARTNERS ={"GTBank", "FunZ MFB"}
 
@@ -36,4 +36,13 @@ def login_user(data: UserLogin, db: Session) -> Token:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     access_token = create_access_token(data={"sub": str(user.id), "role": user.role})
-    return Token(access_token=access_token, token_type="bearer")
+    refresh_token = create_refresh_token(data={"sub": str(user.id), "role": user.role})
+    return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+
+
+def refresh_access_token(request: RefreshTokenRequest) -> Token:
+    payload = decode_token(request.refresh_token)
+    phone = payload.get("sub")
+    access_token = create_access_token({"sub": phone})
+    new_refresh_token = create_refresh_token({"sub": phone})
+    return Token(access_token=access_token, refresh_token=new_refresh_token)
