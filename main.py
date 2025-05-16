@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, account_balance, loans, onboarding, airtime, bills, qr, image_ocr, faq, transfers, admin
 from routers.kyc import upgrade as kyc_upgrade
 from middleware.request_logger import IPLoggingMiddleware
+from routers import whatsapp
+from services.redis_service import init_redis_pool
 
 app = FastAPI(title="SmartBankBot API")
 
@@ -29,6 +31,7 @@ app.include_router(faq.router, prefix="/api/v1/faq")
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(kyc_upgrade.router, prefix="/api/v1/kyc", tags=["KYC"])
+app.include_router(whatsapp.router, prefix="/api/v1/whatsapp")
 
 @app.get("/")
 def read_root():
@@ -37,3 +40,7 @@ def read_root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.on_event("startup")
+async def startup_event():
+    await init_redis_pool()
