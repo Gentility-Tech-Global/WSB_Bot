@@ -8,6 +8,7 @@ router = APIRouter(prefix="/webhook", tags=["WhatsApp Bot"])
 
 logger = logging.getLogger("uvicorn.whatsapp")
 
+
 @router.post("/whatsapp")
 async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     """
@@ -17,23 +18,31 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     """
     try:
         form = await request.form()
-        sender = form.get("From")
-        message = form.get("Body")
-        media_url = form.get("MediaUrl0") if int(form.get("NumMedia", "0")) > 0 else None
+
+        # Safely cast everything to str before calling strip
+        sender = str(form.get("From", "")).strip()
+        message = str(form.get("Body", "")).strip()
+
+        try:
+            num_media = int(str(form.get("NumMedia", "0")))
+        except (ValueError, TypeError):
+            num_media = 0
+
+        media_url = str(form.get("MediaUrl0")) if num_media > 0 else None
 
         if not sender or not message:
             logger.warning("Missing sender or message body in request.")
             return PlainTextResponse("Missing required fields", status_code=status.HTTP_400_BAD_REQUEST)
 
         logger.info(f"Received WhatsApp message from {sender}: {message}")
-        
-        # Call handler (media or message)
+
+        # Handle message
         if media_url:
             reply = await handle_whatsapp_command("upload image", sender, media_url)
         else:
-            reply = await handle_whatsapp_command(message.strip(), sender)
+            reply = await handle_whatsapp_command(message, sender)
 
-        # Respond with TwiML
+        # Create Twilio response
         twiml_response = MessagingResponse()
         twiml_response.message(reply)
 

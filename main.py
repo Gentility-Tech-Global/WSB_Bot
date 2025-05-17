@@ -1,18 +1,49 @@
+import os
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, account_balance, loans, onboarding, airtime, bills, qr, image_ocr, faq, transfers, admin
+from contextlib import asynccontextmanager
+
+from routers import (
+    auth, account_balance, loans, onboarding, airtime, bills,
+    qr, image_ocr, faq, transfers, admin, whatsapp
+)
 from routers.kyc import upgrade as kyc_upgrade
 from middleware.request_logger import IPLoggingMiddleware
-from routers import whatsapp
 from services.redis_service import init_redis_pool
 
-app = FastAPI(title="SmartBankBot API")
+# Configure logger
+logger = logging.getLogger("uvicorn.redis")
+
+# 👇 Define lifespan handler BEFORE passing it to FastAPI
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        redis_host = os.getenv("REDIS_HOST", "localhost")
+        redis_port = int(os.getenv("REDIS_PORT", 6379))
+        redis_db = int(os.getenv("REDIS_DB", 0))
+        redis_password = os.getenv("REDIS_PASSWORD", None)
+
+        await init_redis_pool(
+            host=redis_host,
+            port=redis_port,
+            db=redis_db,
+            password=redis_password
+        )
+        logger.info("✅ Redis initialized successfully")
+        yield
+    except Exception as e:
+        logger.error(f"❌ Redis startup error: {e}")
+        raise e
+
+# 👇 Initialize FastAPI app AFTER defining lifespan
+app = FastAPI(title="SmartBankBot API", lifespan=lifespan)
 
 # Middleware
 app.add_middleware(IPLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,8 +62,9 @@ app.include_router(faq.router, prefix="/api/v1/faq")
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(kyc_upgrade.router, prefix="/api/v1/kyc", tags=["KYC"])
-app.include_router(whatsapp.router, prefix="/api/v1/whatsapp")
+app.include_router(whatsapp.router)
 
+# Health check routes
 @app.get("/")
 def read_root():
     return {"message": "Welcome to SmartBankBot API"}
@@ -40,7 +72,3 @@ def read_root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
-
-@app.on_event("startup")
-async def startup_event():
-    await init_redis_pool()

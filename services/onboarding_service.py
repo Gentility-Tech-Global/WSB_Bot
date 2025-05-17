@@ -12,7 +12,7 @@ from schemas.onboard import (
 from models.user_db import User
 from models.wallet_db import Wallet
 from utils.account import generate_account_number
-from database import SessionLocal
+from database.session import SessionLocal
 from utils.otp_utils import save_otp
 from utils.whatsapp_utils import send_whatsapp_otp
 import re
